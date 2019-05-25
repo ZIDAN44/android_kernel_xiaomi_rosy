@@ -1,24 +1,49 @@
 #!/bin/bash
 # Author- Muralivijay, bitrvmpd
+
+# Set Message Color Variables
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+WHITE='\033[1m'
+NC='\033[0m'
+
+# Clear Screen before staring our script
 clear
-echo "#########################################"
-echo "##### rosy Kernel - Build Script ########"
-echo "#########################################"
+
+# Heading
+echo -e "${WHITE}###########################################${NC}"
+echo -e "${WHITE}##### rosy Kernel - Build Script  ########${NC}"
+echo -e "${WHITE}###########################################${NC}"
 
 # Any2kernel2
-echo "Clone Any2kernel2 if you don,t have "
-git clone https://github.com/muralivijay/AnyKernel2.git -b oreo-rosy ~/AnyKernel2
+echo -e "${GREEN}Clone Any2kernel2 if you don,t have${NC}"
+git clone https://github.com/muralivijay/AnyKernel2.git -b pie-rosy ~/AnyKernel2
 
 # Toolchain
-echo "Clone aarch64-linux-android-4.9 toolchain if you don,t have "
+echo -e "${GREEN}Clone aarch64-linux-android-4.9 toolchain if you don,t have${NC} "
 git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9 -b master ~/aarch64-linux-android-4.9
 
 # Make clean build
-echo "${blu}Make clean build?${txtrst}"
+echo -e "${blu}${BLUE}Make clean build?${NC}${txtrst}"
 select yn in "Yes" "No"; do
     case $yn in
-        Yes ) make clean && make mrproper && ~/AnyKernel2/cleanup.sh ; break;;
+        Yes ) make clean && make mrproper; break;;
         No ) break;;
+    esac
+done
+
+# Make Sure Cleanup Any2kernel dir build
+echo -e "${GREEN} Check your Home dir Anykernel2 Cloned ${NC} "
+echo -e "${GREEN} Make sure run cleanup.sh script if you are clean building ${NC} "
+echo -e "${GREEN} Else when Compress zip it will become Dirty pack Remember ${NC} "
+echo -e "${RED} Do it first ${NC}"
+echo -e "${BLUE} Or ==>experiment<== you can build kernel with dirty but Anykernel2 must be run clean step before doing this ${NC}"
+echo -e "${blu}${BLUE} Are You Done this step ?${NC}${txtrst}"
+select yn in "Yes" "No"; do
+    case $yn in
+        Yes ) echo -e "${GREEN}Good You can Continue to build${NC}" ; break;;
+        No ) echo -e "${RED}You must run Clean step before building kernel. now stoping build${NC} " && exit ; break;;
     esac
 done
 
@@ -39,7 +64,7 @@ then
   fi
   # If you want to build *without* using ccache
   # run this script with -no-ccache flag
-  if [[ "$*" != *"-no-ccache"* ]] 
+  if [[ "$*" != *"-no-ccache"* ]]
   then
     export USE_CCACHE=1
     export CCACHE_DIR=~/.ccache
@@ -66,19 +91,20 @@ then
 fi
 
 # Export ARCH-arm64 & Launch rosy
-export ARCH=arm64 && export SUBARCH=arm64 && make rosy_defconfig
+echo -e "${GREEN} Config Kernel if you want add or disable any driver or feature${NC} "
+echo "                                                                "
+export ARCH=arm64 && export SUBARCH=arm64 && make rosy_defconfig && make menuconfig
 
 # Build Process
-echo -e "> Opening rosy_config file...\n"
-echo -e "> Starting kernel compilation using rosy_defconfig file...\n"
-  CROSS_COMPILE=$CROSS_COMPILE make -j$( nproc --all )
-
+echo -e "${GREEN}> Opening rosy_config file...\n${NC}"
+echo -e ">${GREEN} Starting kernel compilation using${NC} ${BLUE}rosy_defconfig${NC} ${GREEN}file...\n${NC}"
 start=$SECONDS
+  CROSS_COMPILE=$CROSS_COMPILE make -j$( nproc --all )
 
 # Get current kernel version
 KERNEL_VERSION=$(head -n3 Makefile | sed -E 's/.*(^\w+\s[=]\s)//g' | xargs | sed -E 's/(\s)/./g')
-echo -e "\n\n> Packing Rosy Kernel v$KERNEL_VERSION\n\n"
-# Pack the kernel as a flashable TWRP zip. PIE Edition
+echo -e "\n\n> ${GREEN}Packing rosy Kernel v$KERNEL_VERSION\n\n${NC}"
+# Pack the kernel as a flashable TWRP zip. Pie Edition
 ~/AnyKernel2/build.sh $KERNEL_VERSION PIE
 
 end=$SECONDS
