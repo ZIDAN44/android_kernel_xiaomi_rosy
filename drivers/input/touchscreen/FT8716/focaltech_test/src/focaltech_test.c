@@ -264,7 +264,7 @@ static struct proc_dir_entry *ctp_device_proc;
 #define IC_TEST_VERSION  "Test version: V1.0.0--2016-12-28, (sync version of FT_MultipleTest: V4.0.0.0 ------ 2016-07-18)"
 
 
-#define FTS_INI_FILE_PATH "/etc/"
+#define FTS_INI_FILE_PATH "/vendor/etc/"
 
 #define FTS_SAVE_DATA_FILE_PATH "/mnt/sdcard/"
 
