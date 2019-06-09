@@ -1,5 +1,5 @@
 /* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
- * Copyright (C) 2018 XiaoMi, Inc.
+ * Copyright (C) 2019 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -137,8 +137,8 @@ static const DECLARE_TLV_DB_SCALE(analog_gain, 0, 25, 1);
 static struct snd_soc_dai_driver msm8x16_wcd_i2s_dai[];
 
 static struct switch_dev accdet_data;
-static int accdet_state;
-static bool spkr_boost_en;
+static int accdet_state = 0;
+static bool spkr_boost_en = false;
 
 #define MSM8X16_WCD_ACQUIRE_LOCK(x) \
 	mutex_lock_nested(&x, SINGLE_DEPTH_NESTING)
@@ -1229,7 +1229,6 @@ static int __msm8x16_wcd_reg_write(struct snd_soc_codec *codec,
 
 	mutex_lock(&msm8x16_wcd->io_lock);
 	pdata = snd_soc_card_get_drvdata(codec->component.card);
-
 	if (pdata == NULL) {
 		mutex_unlock(&msm8x16_wcd->io_lock);
 		return ret;
@@ -4113,7 +4112,6 @@ void wcd_imped_config(struct snd_soc_codec *codec,
 	}
 
 	codec_version = get_codec_version(msm8x16_wcd);
-
 	pr_err("%s codec_version %d imped %u set_gain %d\n", __func__,
 									codec_version, value, set_gain);
 
@@ -4217,8 +4215,12 @@ static int msm8x16_wcd_hphl_dac_event(struct snd_soc_dapm_widget *w,
 		if (!ret)
 			wcd_imped_config(codec, impedl, true);
 		else
+			#ifdef WT_COMPILE_FACTORY_VERSION
+			wcd_imped_config(codec, impedl, true);
+			#else
 			dev_dbg(codec->dev, "Failed to get mbhc impedance %d\n",
 				ret);
+			#endif
 		break;
 	case SND_SOC_DAPM_POST_PMU:
 		snd_soc_update_bits(codec,
@@ -5153,7 +5155,6 @@ static const struct snd_soc_dapm_widget msm8x16_wcd_dapm_widgets[] = {
 			6, 0 , NULL, 0, msm8x16_wcd_codec_enable_spk_pa,
 			SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 			SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
-
 #ifdef CONFIG_D1_ROSY
 	SND_SOC_DAPM_PGA_E("LINEOUT PA", MSM8X16_WCD_A_ANALOG_RX_LO_EN_CTL,
 			5, 1 , NULL, 0, msm8x16_wcd_codec_enable_lo_pa,

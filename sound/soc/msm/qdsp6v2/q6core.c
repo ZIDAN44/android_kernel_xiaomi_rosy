@@ -1,4 +1,5 @@
 /* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2019 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -297,6 +298,7 @@ static int q6core_send_get_avcs_fwk_ver_cmd(void)
 	q6core_lcl.adsp_status = 0;
 	q6core_lcl.avcs_fwk_ver_resp_received = 0;
 
+	q6core_lcl.cmd_resp_received_flag &= ~(FLAG_AVCS_GET_VERSIONS_RESULT);
 	ret = apr_send_pkt(q6core_lcl.core_handle_q,
 			   (uint32_t *) &avcs_ver_cmd);
 	if (ret < 0) {

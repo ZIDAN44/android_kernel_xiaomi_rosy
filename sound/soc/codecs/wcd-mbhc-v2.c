@@ -1,5 +1,5 @@
 /* Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
- * Copyright (C) 2018 XiaoMi, Inc.
+ * Copyright (C) 2019 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -343,13 +343,9 @@ out_micb_en:
 			/* enable current source and disable mb, pullup*/
 			wcd_enable_curr_micbias(mbhc, WCD_MBHC_EN_MB);
 
-#if defined(CONFIG_C3N_SMB358) || defined(CONFIG_C3B_BQ2560X)
-
-#else
 		/* configure cap settings properly when micbias is disabled */
 		if (mbhc->mbhc_cb->set_cap_mode)
 			mbhc->mbhc_cb->set_cap_mode(codec, micbias1, false);
-#endif
 		break;
 	case WCD_EVENT_PRE_HPHL_PA_OFF:
 		mutex_lock(&mbhc->hphl_pa_lock);
@@ -838,10 +834,6 @@ static void wcd_mbhc_find_plug_and_report(struct wcd_mbhc *mbhc,
 		goto exit;
 	}
 
-#ifdef CONFIG_C3B_BQ2560X
-	wt_correct_accessory_type = false;
-#endif
-
 	if (plug_type == MBHC_PLUG_TYPE_HEADPHONE) {
 		/*
 		 * Nothing was reported previously
@@ -1226,12 +1218,13 @@ static void wcd_correct_swch_plug(struct work_struct *work)
 	 * is handled with ref-counts by individual codec drivers, there is
 	 * no need to enabale micbias/pullup here
 	 */
-
+	WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_FSM_EN, 0);
 	wcd_enable_curr_micbias(mbhc, WCD_MBHC_EN_MB);
 
 
 	/* Enable HW FSM */
 	WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_FSM_EN, 1);
+	msleep(20);
 	/*
 	 * Check for any button press interrupts before starting 3-sec
 	 * loop.
@@ -1397,7 +1390,6 @@ correct_plug_type:
 				 */
 				if (mbhc->mbhc_cfg->swap_gnd_mic &&
 					mbhc->mbhc_cfg->swap_gnd_mic(codec)) {
-
 					printk("%s cross_conn check: US_EU gpio present,flip switch\n"
 						, __func__);
 					continue;
@@ -1485,13 +1477,6 @@ report:
 	WCD_MBHC_RSC_LOCK(mbhc);
 	wcd_mbhc_find_plug_and_report(mbhc, plug_type);
 
-	#ifdef CONFIG_C3B_BQ2560X
-	if (wt_correct_accessory_type == true) {
-		plug_type = MBHC_PLUG_TYPE_HEADSET;
-		wt_correct_accessory_type = false;
-	}
-	#endif
-
 	WCD_MBHC_RSC_UNLOCK(mbhc);
 enable_supply:
 	if (mbhc->mbhc_cb->mbhc_micbias_control)
@@ -1518,17 +1503,8 @@ exit:
 		wcd_mbhc_hs_elec_irq(mbhc, WCD_MBHC_ELEC_HS_REM, true);
 		WCD_MBHC_RSC_UNLOCK(mbhc);
 	}
-	if (mbhc->mbhc_cb->set_cap_mode) {
-#if defined(CONFIG_C3N_SMB358) || defined(CONFIG_C3B_BQ2560X)
-
-	/*bug 225893 ,20161111,add,headset button erro*/
-		if (plug_type == MBHC_PLUG_TYPE_HEADSET) {
-			mbhc->mbhc_cb->set_cap_mode(codec, micbias1, true);
-			pr_debug("%s:set_cap_mode micbias1=%d, micbias2 = %d==>true , MBHC_PLUG_TYPE_HEADSET\n", __func__, micbias1, micbias2);
-		} else
-#endif
+	if (mbhc->mbhc_cb->set_cap_mode)
 		mbhc->mbhc_cb->set_cap_mode(codec, micbias1, micbias2);
-	}
 
 	if (mbhc->mbhc_cb->hph_pull_down_ctrl)
 		mbhc->mbhc_cb->hph_pull_down_ctrl(codec, true);
